@@ -205,7 +205,7 @@ read.dima <- function(data.path,
     FROM joinSitePlotLine INNER JOIN (tblLPIHeader LEFT JOIN tblLPIDetail ON tblLPIHeader.RecKey = tblLPIDetail.RecKey) ON joinSitePlotLine.LineKey = tblLPIHeader.LineKey;"
   }
   if (gap) {
-    queries$gap <- "SELECT joinSitePlotLine.SiteID, joinSitePlotLine.SiteKey, joinSitePlotLine.PlotID, joinSitePlotLine.PlotKey, joinSitePlotLine.LineKey, tblGapHeader.FormDate, tblGapHeader.Observer, tblGapHeader.Recorder, tblGapHeader.DataEntry, tblGapHeader.DataErrorChecking, tblGapHeader.LineLengthAmount, joinSitePlotLine.LineID, tblGapDetail.GapStart, tblGapDetail.GapEnd, tblGapDetail.Gap, tblGapHeader.Perennials, tblGapHeader.AnnualGrasses, tblGapHeader.AnnualForbs, tblGapHeader.Other
+    queries$gap <- "SELECT joinSitePlotLine.SiteID, joinSitePlotLine.SiteKey, joinSitePlotLine.PlotID, joinSitePlotLine.PlotKey, joinSitePlotLine.LineKey, tblGapHeader.FormDate, tblGapHeader.Observer, tblGapHeader.Recorder, tblGapHeader.DataEntry, tblGapHeader.DataErrorChecking, tblGapHeader.LineLengthAmount, joinSitePlotLine.LineID, tblGapDetail.GapStart, tblGapDetail.GapEnd, tblGapDetail.Gap, tblGapHeader.PerennialsCanopy, tblGapHeader.AnnualGrassesCanopy, tblGapHeader.AnnualForbsCanopy, tblGapHeader.OtherCanopy
     FROM joinSitePlotLine INNER JOIN (tblGapHeader INNER JOIN tblGapDetail ON tblGapHeader.RecKey = tblGapDetail.RecKey) ON joinSitePlotLine.LineKey = tblGapHeader.LineKey;"
   }
   if (stability) {
