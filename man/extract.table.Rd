@@ -4,7 +4,7 @@
 \alias{extract.table}
 \title{Reading in data from DIMA}
 \usage{
-extract.table(data.path, dima, query)
+\method{extract}{table}(data.path, dima, query)
 }
 \arguments{
 \item{data.path}{A string specifying the folder path containing the DIMA[s].}

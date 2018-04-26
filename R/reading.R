@@ -1,3 +1,14 @@
+# Read in the default species list
+#' @export
+default.species <- function(){
+  return(read.csv(paste0(path.package("dima.tools"), "/defaults/species.csv"), stringsAsFactors = FALSE))
+}
+
+# Read in the default fieldnames
+fieldnames.lookup <- function(){
+  return(read.csv(paste0(path.package("dima.tools"), "/defaults/fieldnames.csv"), stringsAsFactors = FALSE))
+}
+
 #' Reading in data from multiple DIMAs
 #'
 #' @description This will read in data from one or more DIMAs according to the SQL queries requested and includes default SQL queries for canopy gap, line-point intercept, soil stability, and species inventory data. The output is either a list of lists of query results named with the source filename[s] or a list of query results combined from all sources named with the query name[s].
@@ -29,17 +40,17 @@ read.dima <- function(data.path,
     stop("At least one of all.tables, gap, lpi, species, species.inventory, and stability must be TRUE or custom.query must not be NULL.")
   }
   if (is.null(dima.list)) {
-    dima.list <- list.files(path = data.path, pattern = "\\.(MDB)|(mdb)|(accdb)|(ACCDB)$")
+    dima.list <- list.files(path = data.path, pattern = "\\.(MDB)|(mdb)$")
     if (is.null(dima.list)) {
-      stop(paste0("No Access databases found in ", data.path))
+      stop(paste0("No .mdb format Access databases found in ", data.path))
     }
   } else {
-    if (length(dima.list[grepl(x = dima.list, pattern = "\\.(MDB)|(mdb)|(accdb)|(ACCDB)$")]) != length(dima.list)) {
+    if (length(dima.list[grepl(x = dima.list, pattern = "\\.(MDB)|(mdb)$")]) != length(dima.list)) {
       stop("Valid file extension required for all DIMAs in argument dima.list")
     }
-    if (length(dima.list[dima.list %in% list.files(path = data.path, pattern = "\\.(MDB)|(mdb)|(accdb)|(ACCDB)$")]) != length(dima.list)) {
+    if (length(dima.list[dima.list %in% list.files(path = data.path, pattern = "\\.(MDB)|(mdb)$")]) != length(dima.list)) {
       stop(paste0("Unable to find the following DIMAs in the provided data path: ",
-                  paste(dima.list[!(dima.list %in% list.files(path = data.path, pattern = "\\.(MDB)|(mdb)|(accdb)|(ACCDB)$"))], collapse = ", ")))
+                  paste(dima.list[!(dima.list %in% list.files(path = data.path, pattern = "\\.(MDB)|(mdb)$"))], collapse = ", ")))
     }
   }
 
@@ -321,6 +332,11 @@ extract.table <- function(data.path, dima, query){
     stop("Unable to find the specified DIMA in the provided data path")
   }
 
+  ## Using odbc
+  # dima.connection <- odbc::dbConnect(drv = "Microsoft Access Driver", dsn = paste(data.path, dima, sep = "/"))
+  # data.current <- lapply(query, FUN = DBI::dbGetQuery, conn = dima.connection)
+  # odbc::dbDisconnect(dima.connection)
+
   ## Use the appropriate function from RODBC:: based on 32- versus 64-bit installs of R
   switch(R.Version()$arch,
          "x86_64" = {
@@ -333,4 +349,31 @@ extract.table <- function(data.path, dima, query){
   data.current <- lapply(query, FUN = RODBC::sqlQuery, channel = dima.channel, stringsAsFactors = FALSE)
   RODBC::odbcClose(channel = dima.channel)
   return(data.current)
+}
+
+#' Read Tables From ESRI Geodatabases
+#' @description A workaround using \code{gdalUtils::ogr2ogr()} and \code{foreign::read.dbf()} to read tables without geometry from ESRI geodatabases into R environments as data frames.
+#' @param dsn Character string. The full filepath and filename (including file extension) of the geodatabase containing the table of interest.
+#' @param tablename Character string. The exact name of the table in the file geodatabase being read in.
+#' @param overwrite Logical. If \code{TRUE} then the intermediate step of writing the table to a temporary file as an ESRI shapefile can overwrite an existing shapefile if they share a filepath and filename. Defaults to \code{TRUE}.
+#' @param verbose Logical. Passed to \code{gdalUtils::ogr2ogr(verbose)}. Verbose mode can be very helpful for troubleshooting. Defaults to \code{FALSE}.
+#' @return Data frame
+#' @export
+read.gdbtable <- function(dsn,
+                          tablename,
+                          overwrite = TRUE,
+                          verbose = FALSE) {
+
+  # Make the call to write the table like an ESRI shapefile in a temp directory
+  gdalUtils::ogr2ogr(src_datasource_name = dsn,
+                     dst_datasource_name = tempdir(),
+                     f = "ESRI Shapefile",
+                     layer = tablename,
+                     verbose = verbose,
+                     overwrite = overwrite)
+
+  # Read the geometry-less shapefile to get the data frame in
+  df <- foreign::read.dbf(file.path(conversionDir, paste0(tablename, ".dbf")))
+
+  return(df)
 }

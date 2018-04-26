@@ -12,3 +12,6 @@ RoxygenNote: 6.0.1
 Imports:
   tidyverse,
   RODBC
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

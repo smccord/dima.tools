@@ -40,11 +40,14 @@ metamerge <- function(dima.tables = list(),
              "VEGETATION STRUCTURE" = "VegStruct")
 
   ## Search the values of forms to see if the argument string form matches
-  if (any(grepl(forms, pattern = paste0("^", form, "$", ignore.case = TRUE)))) {
-    form <- unique(forms[grepl(forms, pattern = paste0("^", form, "$", ignore.case = TRUE))])
+  if (any(grepl(forms, pattern = paste0("^", form, "$"), ignore.case = TRUE))) {
+    form <- unique(forms[grepl(forms, pattern = paste0("^", form, "$"), ignore.case = TRUE)])
     ## If that finds nothing, then try the names
-  } else if (any(grepl(names(forms), pattern = paste0("^", form, "$", ignore.case = TRUE)))) {
-    form <- unique(forms[names(forms)[grepl(names(forms), pattern = paste0("^", form, "$", ignore.case = TRUE))]])
+  } else if (any(grepl(names(forms), pattern = paste0("^", form, "$"), ignore.case = TRUE))) {
+    form <- unique(forms[names(forms)[grepl(names(forms), pattern = paste0("^", form, "$"), ignore.case = TRUE)]])
+  } else {
+    message("The string specifying the form must match one and only one form. It can either be the name of the form or the name of the table containing the form data. The following are valid values:")
+    stop(paste(paste(names(forms), collapse = ", "), paste(forms, collapse = ", "), sep = ","))
   }
   ## If there were no matches or too many, stop!
   if (length(form) != 1) {

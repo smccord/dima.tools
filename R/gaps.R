@@ -16,7 +16,7 @@ gap.cover <- function(dima.tables,
                  type="canopy") {
 
   gap.data <- metamerge(dima.tables = dima.tables,
-                        form = "CanopyGap",
+                        form = "Gap",
                         minimum = TRUE)
 
 

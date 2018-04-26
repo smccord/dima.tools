@@ -4,7 +4,8 @@
 \alias{gather.lpi}
 \title{Gather LPI data into tall/long data frames}
 \usage{
-gather.lpi(dima.tables, meta = TRUE, species.characteristics = TRUE)
+\method{gather}{lpi}(dima.tables, meta = TRUE,
+  species.characteristics = TRUE)
 }
 \arguments{
 \item{dima.tables}{A list of data frames. Recommended to use the output from\code{read.dima()}. Must contain data frames called tblLPIHeader and tblLPIDetail which have the same fields as the tables in DIMA with the same names. If \code{meta} is \code{TRUE} then it must also include data frames called tblSites, tblPlots, and tblLines which have the same fields as the tables in DIMA with the same names. If \code{species.characteristics} is \code{TRUE} then it must also include data frames called tblSpecies and tblSpeciesGrowthHabit (and optionally tblSpeciesGroups) which have the same fields as the tables in DIMA with the same names.}

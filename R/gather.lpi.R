@@ -1,3 +1,61 @@
+#' Identify Unknown Plant Codes and Their Growth Habits and Durations
+#' @description Check a character string to see if it's a valid DIMA/AIM unknown plant code. Additionally, try to assign growth habit and duration for that code if possible.
+#' @param code Character string. The string to check against the unknown plant code patterns
+#' @param valid.structure Regular expression as a character string. Define what the acceptable structure is for unknown plant codes. Defaults to the AIM format of \code{"^(AF|AG|PF|PG|SH|TR)\\d{2,3}$"}.
+#' @return A named list with three values. \code{valid} is logical and indicates if the code was a valid unknown. The remaining values match the style of DIMA's \code{tblSpeciesGrowthHabit}. \code{habit}, a character string, will be \code{NULL} if the code was not valid and either \code{"Woody"} or \code{"Non-woody"} as appropriate if it was valid. \code{subhabit}, a character string, will be \code{NULL} if the code was not valid and \code{"Forb/herb"}, \code{"Graminoid"}, \code{"Shrub"}, or \code{"Tree"} as appropriate if it was valid. \code{duration}, a character string, will be \code{NULL} if the code was not valid and either \code{"Annual"} or \code{"Perennial"} as appropriate if it was valid.
+check.code <- function(code,
+                       valid.structure = "^(AF|AG|PF|PG|SH|TR)\\d{2,3}$") {
+  if (!is.character(code)) {
+    stop("The code must be a character string.")
+  }
+  if (!is.character(valid.structure)) {
+    stop("valid.structure must be a regular expression as a character string.")
+  }
+
+  # Okay, so is this a valid code????
+  valid <- grepl(code, pattern = valid.structure)
+
+  # If it wasn't a valid code, then just assign everything to NULL
+  if (!valid) {
+    growthhabit <- NULL
+    growthhabitsub <- NULL
+    duration <- NULL
+  } else {
+    # Check to see if it starts with one of our woody prefixes
+    if (grepl(code, pattern = "^(SH|TR)")) {
+      # If it's woody, it's also perennial
+      growthhabit <- "Woody"
+      duration <- "Perennial"
+      # There are only two categories, so if it's not a tree it's a shrub
+      if (grepl(code, pattern = "^TR")){
+        growthhabitsub <- "Tree"
+      } else {
+        growthhabitsub <- "Shrub"
+      }
+    } else {
+      # If it wasn't a woody, then it was non-woody
+      growthhabit <- "Non-woody"
+      # We only have forbs and graminoids, so we can just use if/else
+      if (grepl(code, pattern = "F")) {
+        growthhabitsub <- "Forb/herb"
+      } else {
+        growthhabitsub <- "Graminoid"
+      }
+      # Same for annual/perennial
+      if (grepl(code, pattern = "^A")) {
+        duration <- "Annual"
+      } else {
+        duration <- "Perennial"
+      }
+    }
+  }
+  # Assemble the output list
+  return(list("Valid" = valid,
+              "GrowthHabit" = growthhabit,
+              "GrowthHabitSub" = growthhabitsub,
+              "Duration" = duration))
+}
+
 #' Gather LPI data into tall/long data frames
 #'
 #' @description Given a list of data frames containing tblSites, tblPlots, tblLines, tblLPIHeader, and tblLPIDetail, create a tall format data frame for canopy data from LPI and one for heights from the specialized height fields.
@@ -144,6 +202,16 @@ gather.lpi <- function(dima.tables,
                        by.y = "RecKey",
                        all.x = TRUE)
     }
+
+    # Add the species characteristics for unknown codes that show up here
+    # Which codes don't show up in the species characteristics table?
+    unaccounted.codes <- unique(lpi.tall$code[!(lpi.tall$code %in% species$SpeciesCode)])
+    # Make a data frame of the result of running those through check.code()
+    unknowns.df <- dplyr::bind_rows(lapply(lapply(unaccounted.codes, check.code), data.frame))
+    # Slice that to only the ones that were valid unknown codes
+    unknowns.df <- unknowns.df[unknowns.df$Valid,]
+    # Smash those into the species table
+    species <- dplyr::bind_rows(list(species, unknowns.df))
 
     ## Add species information
     lpi.tall <- merge(x = lpi.tall,

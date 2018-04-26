@@ -124,12 +124,7 @@ pct.cover <- function(lpi.tall,
 
 
   if (!tall) {
-    summary <- tidyr::spread(summary, key = indicator, value = percent) %>%
-      ## Replace the NA values with 0s because they represent 0% cover for that indicator
-      tidyr::replace_na(replace = setNames(as.list(rep.int(0,
-                                                           # Make a list of 0s named with the newly-created field names for replace_na()
-                                                           times = length(unique(names(.)[!(names(.) %in% c("Year", "SiteKey", "SiteID", "SiteName", "PlotKey", "PlotID", "LineKey", "LineID"))])))),
-                                           unique(names(.)[!(names(.) %in% c("Year", "SiteKey", "SiteID", "SiteName", "PlotKey", "PlotID", "LineKey", "LineID"))])))
+    summary <- tidyr::spread(summary, key = indicator, value = percent, fill = 0)
   }
 
   return(summary)
